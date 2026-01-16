@@ -1,0 +1,17 @@
+# Temi Patrol Waypoints
+# Format: one waypoint per line
+# Lines starting with # are comments
+
+a13
+a12
+a15
+a22
+a19
+a8
+a7
+a2
+a5
+a12
+a12charge
+home base
+
