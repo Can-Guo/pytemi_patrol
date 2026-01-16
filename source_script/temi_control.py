@@ -73,8 +73,10 @@ class Temi_Control_Def:
         self.target_waypoint = None   # Target waypoint for current navigation
         self.position_status = "NaN"  # Position status: "NaN", "moving_to_next_point", "current_waypoint_XXX"
         
-        # Photo capture settings
-        self.photo_dir = "./pytemi/photos/"  # Directory to save captured photos
+        # Photo capture settings - 自动定位到项目根目录的photos文件夹
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(script_dir))  # pytemi根目录
+        self.photo_dir = os.path.join(project_root, "photos")
         self._ensure_photo_directory()
         
         # Camera initialization (pre-opened for fast capture)
