@@ -14,6 +14,7 @@ import time
 import socket
 import ipaddress
 import platform
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -149,10 +150,8 @@ class CameraController:
         networks = []
         
         try:
-            # 获取本机主机名
+            # 方法1: 尝试使用 socket.getaddrinfo
             hostname = socket.gethostname()
-            
-            # 获取所有IP地址
             addresses = socket.getaddrinfo(hostname, None)
             
             for addr_info in addresses:
@@ -176,6 +175,42 @@ class CameraController:
                                 self._log(f"   ├─ 检测到局域网网段: {network}")
                     except ValueError:
                         continue
+            
+            # 方法2: 如果方法1未获取到网段，尝试读取 /proc/net/fib_trie (Linux)
+            if len(networks) == 0 and platform.system() == "Linux":
+                self._log("   ├─ 使用备用方法检测网络接口...")
+                try:
+                    import subprocess
+                    # 使用 ip addr 命令获取所有网络接口
+                    result = subprocess.run(['ip', 'addr', 'show'], 
+                                          capture_output=True, text=True, timeout=5)
+                    
+                    if result.returncode == 0:
+                        for line in result.stdout.split('\n'):
+                            # 查找 inet 行，格式如: inet 192.168.8.129/24 brd 192.168.8.255 scope global dynamic noprefixroute eth1
+                            if 'inet ' in line and 'scope global' in line:
+                                parts = line.strip().split()
+                                if len(parts) >= 2:
+                                    # 获取 IP/掩码，如 192.168.8.129/24
+                                    ip_with_mask = parts[1]
+                                    try:
+                                        # 创建网络对象
+                                        interface = ipaddress.IPv4Interface(ip_with_mask)
+                                        ip = interface.ip
+                                        
+                                        # 跳过回环地址
+                                        if ip.is_loopback:
+                                            continue
+                                        
+                                        # 获取网络地址
+                                        network = interface.network
+                                        if network not in networks:
+                                            networks.append(network)
+                                            self._log(f"   ├─ 检测到局域网网段: {network}")
+                                    except ValueError:
+                                        continue
+                except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+                    self._log(f"   ├─ 备用方法失败: {e}")
         
         except Exception as e:
             self._log(f"⚠️  获取本地网络信息失败: {e}")

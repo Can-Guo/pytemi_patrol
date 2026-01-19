@@ -14,7 +14,7 @@ from datetime import datetime
 class CameraControllerTester:
     """相机控制器测试类"""
     
-    def __init__(self, host: str = "localhost", port: int = 8765):
+    def __init__(self, host: str = "192.168.8.132", port: int = 8765):
         """
         初始化测试器
         
@@ -324,7 +324,7 @@ class CameraControllerTester:
 async def main():
     """主函数"""
     # 解析命令行参数
-    host = "localhost"
+    host = "192.168.8.132"
     port = 8765
     mode = "auto"  # auto 或 interactive
     
