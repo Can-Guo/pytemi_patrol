@@ -51,7 +51,14 @@ class CameraController:
         
         # 平台检测
         self.is_jetson = self._detect_jetson_platform()
-        self.use_csi = use_csi or self.is_jetson
+        # 明确判断：只有当use_csi显式为True时才使用CSI，否则使用USB
+        if use_csi is True:
+            self.use_csi = True
+        elif use_csi is False:
+            self.use_csi = False
+        else:
+            # use_csi为None时，不自动启用CSI（即使在Jetson上）
+            self.use_csi = False
         self.csi_width = csi_width
         self.csi_height = csi_height
         self.csi_fps = csi_fps
