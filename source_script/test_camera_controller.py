@@ -25,36 +25,11 @@ class CameraControllerTester:
         self.host = host
         self.port = port
         self.uri = f"ws://{host}:{port}"
-        self.websocket = None
-        self.heartbeat_task = None
-        self.reconnect_task = None
-        self.is_connected = False
     
     def _log(self, message: str):
         """输出带时间戳的日志"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {message}")
-    
-    async def send_heartbeat(self, websocket):
-        """定期发送心跳保持连接"""
-        try:
-            while self.is_connected:
-                await asyncio.sleep(15)  # 每15秒发送一次心跳
-                if self.is_connected:
-                    try:
-                        ping_cmd = {"command": "ping"}
-                        await websocket.send(json.dumps(ping_cmd))
-                        response = await asyncio.wait_for(websocket.recv(), timeout=5)
-                        # 静默处理心跳响应，不打印日志
-                    except asyncio.TimeoutError:
-                        self._log("⚠️  心跳超时")
-                    except Exception as e:
-                        self._log(f"⚠️  心跳发送失败: {e}")
-                        break
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            self._log(f"❌ 心跳任务错误: {e}")
     
     async def send_command(self, websocket, command: dict) -> dict:
         """
@@ -289,13 +264,7 @@ class CameraControllerTester:
                 close_timeout=10   # 关闭超时10秒
             ) as websocket:
                 self._log("✅ 连接成功")
-                self._log("💓 心跳已启用\n")
-                
-                self.is_connected = True
-                self.websocket = websocket
-                
-                # 启动心跳任务
-                self.heartbeat_task = asyncio.create_task(self.send_heartbeat(websocket))
+                self._log("💓 心跳已启用 (WebSocket 自动 ping/pong)\n")
                 
                 while True:
                     print("\n" + "="*70)
@@ -314,9 +283,6 @@ class CameraControllerTester:
                     
                     if choice == "0":
                         self._log("👋 退出交互式测试")
-                        self.is_connected = False
-                        if self.heartbeat_task:
-                            self.heartbeat_task.cancel()
                         break
                     elif choice == "1":
                         await self.test_status(websocket)
@@ -360,10 +326,6 @@ class CameraControllerTester:
             self._log("\n👋 退出交互式测试")
         except Exception as e:
             self._log(f"❌ 错误: {e}")
-        finally:
-            self.is_connected = False
-            if self.heartbeat_task:
-                self.heartbeat_task.cancel()
 
 
 async def main():
