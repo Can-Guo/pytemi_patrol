@@ -463,8 +463,8 @@ class CameraController:
             # 完整路径
             filepath = os.path.join(self.video_dir, filename)
             
-            # 根据格式选择编码器
-            fourcc, codec_success = self._get_fourcc_for_format(format)
+            # 根据格式选择编码器（传递实际参数以测试编码器）
+            fourcc, codec_name = self._get_fourcc_for_format(format, width, height, fps)
             self.video_writer = cv2.VideoWriter(filepath, fourcc, fps, (width, height))
             
             if not self.video_writer.isOpened():
@@ -552,26 +552,29 @@ class CameraController:
             self.video_writer.release()
             self.video_writer = None
     
-    def _get_fourcc_for_format(self, format_ext: str) -> tuple:
+    def _get_fourcc_for_format(self, format_ext: str, width: int = 640, height: int = 480, fps: int = 20) -> tuple:
         """
-        根据视频格式获取对应的fourcc编码器
+        根据视频格式获取对应的fourcc编码器，并验证编码器是否可用
         
         Args:
             format_ext: 文件扩展名（如 'mp4', 'avi', 'mov'）
+            width: 测试视频宽度
+            height: 测试视频高度
+            fps: 测试视频帧率
             
         Returns:
-            tuple: (fourcc对象, 是否成功)
+            tuple: (fourcc对象, 编码器名称)
         """
         format_ext = format_ext.lower().lstrip('.')
         
         # 不同格式的编码器映射
         if self.is_jetson:
-            # Jetson平台优先使用硬件编码器
+            # Jetson平台：避免使用可能失败的硬件编码器，优先使用MJPG
             codec_map = {
-                'mp4': ['avc1', 'H264', 'mp4v', 'X264'],  # 优先H.264硬件编码
+                'mp4': ['MJPG', 'mp4v', 'X264', 'avc1'],  # MJPG最稳定
                 'avi': ['MJPG', 'XVID', 'DIVX'],          # MJPEG较通用
-                'mov': ['avc1', 'H264', 'mp4v'],          # H.264编码
-                'mkv': ['H264', 'X264', 'XVID']           # H.264编码
+                'mov': ['MJPG', 'mp4v', 'avc1'],          # MJPG优先
+                'mkv': ['MJPG', 'X264', 'XVID']           # MJPG优先
             }
         else:
             # 标准PC平台编码器
@@ -582,20 +585,39 @@ class CameraController:
                 'mkv': ['X264', 'H264', 'XVID']            # MKV格式
             }
         
-        codecs = codec_map.get(format_ext, ['XVID'])
+        codecs = codec_map.get(format_ext, ['MJPG', 'XVID'])
+        
+        # 测试文件路径
+        test_file = os.path.join(self.video_dir, f".test_codec_{format_ext}.{format_ext}")
         
         # 尝试每个编码器
         for codec in codecs:
             try:
                 fourcc = cv2.VideoWriter_fourcc(*codec)
-                self._log(f"   └─ 使用编码器: {codec}")
-                return fourcc, True
+                
+                # 实际测试编码器是否可用
+                test_writer = cv2.VideoWriter(test_file, fourcc, fps, (width, height))
+                
+                if test_writer.isOpened():
+                    test_writer.release()
+                    # 删除测试文件
+                    try:
+                        if os.path.exists(test_file):
+                            os.remove(test_file)
+                    except:
+                        pass
+                    
+                    self._log(f"   └─ 使用编码器: {codec}")
+                    return fourcc, codec
+                else:
+                    test_writer.release()
+                    
             except Exception as e:
                 continue
         
-        # 如果都失败，使用默认的XVID
-        self._log(f"   ⚠️  格式 {format_ext} 的编码器不可用，使用默认XVID")
-        return cv2.VideoWriter_fourcc(*'XVID'), False
+        # 如果都失败，使用最稳定的MJPG
+        self._log(f"   ⚠️  格式 {format_ext} 的编码器测试失败，使用默认MJPG")
+        return cv2.VideoWriter_fourcc(*'MJPG'), 'MJPG'
     
     async def handle_websocket_message(self, websocket, path):
         """
