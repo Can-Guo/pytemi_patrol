@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temi机器人控制面板</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 8px 15px;
+        }
+        .btn-action {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .waypoint-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .waypoint-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        .photo-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .photo-thumbnail:hover {
+            transform: scale(1.05);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-connected { background-color: #28a745; animation: pulse 2s infinite; }
+        .status-disconnected { background-color: #dc3545; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-0"><i class="bi bi-robot"></i> Temi机器人控制面板</h2>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="status-indicator" id="statusIndicator"></span>
+                        <span id="connectionStatus" class="fw-bold">未连接</span>
+                        <button class="btn btn-success btn-action ms-3" id="connectBtn" onclick="connect()">
+                            <i class="bi bi-plug"></i> 连接
+                        </button>
+                        <button class="btn btn-danger btn-action ms-2" id="disconnectBtn" onclick="disconnect()" style="display:none;">
+                            <i class="bi bi-plug-fill"></i> 断开
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Status & Controls -->
+            <div class="col-md-8">
+                <!-- Status Card -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> 机器人状态</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h6 class="text-muted">运行状态</h6>
+                                <span class="badge bg-secondary status-badge" id="robotStatus">未知</span>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-muted">导航状态</h6>
+                                <span class="badge bg-secondary status-badge" id="gotoStatus">未知</span>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-muted">当前操作</h6>
+                                <span class="badge bg-info status-badge" id="currentOperation">无</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-controller"></i> 控制面板</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-3">
+                            <button class="btn btn-primary btn-action btn-lg" onclick="startPatrol()">
+                                <i class="bi bi-arrow-repeat"></i> 开始巡航
+                            </button>
+                            <button class="btn btn-warning btn-action btn-lg" onclick="stopRobot()">
+                                <i class="bi bi-stop-circle"></i> 停止
+                            </button>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="waypointInput" placeholder="输入路点名称">
+                                <button class="btn btn-info" onclick="gotoWaypoint()">
+                                    <i class="bi bi-geo-alt"></i> 前往路点
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photos -->
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-camera"></i> 最近照片</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2" id="photoGallery">
+                            <div class="col-12 text-center text-muted">暂无照片</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Waypoints -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-geo"></i> 路点列表</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        <div class="list-group" id="waypointList">
+                            <div class="text-center text-muted">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Config Info -->
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-gear"></i> 配置信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <small>
+                            <div><strong>MQTT服务器:</strong> <span id="configBrokerIp">-</span></div>
+                            <div><strong>机器人序列号:</strong> <span id="configSerial">-</span></div>
+                            <div><strong>Waypoints文件:</strong> <span id="configWaypoints">-</span></div>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 初始化
+        let isConnected = false;
+
+        // 连接
+        async function connect() {
+            try {
+                const response = await fetch('/api/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    isConnected = true;
+                    updateConnectionUI();
+                    alert(data.message);
+                } else {
+                    alert('连接失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('连接错误: ' + error);
+            }
+        }
+
+        // 断开连接
+        async function disconnect() {
+            try {
+                const response = await fetch('/api/disconnect', {method: 'POST'});
+                const data = await response.json();
+                
+                isConnected = false;
+                updateConnectionUI();
+                alert(data.message);
+            } catch (error) {
+                alert('断开连接错误: ' + error);
+            }
+        }
+
+        // 更新连接状态UI
+        function updateConnectionUI() {
+            const indicator = document.getElementById('statusIndicator');
+            const status = document.getElementById('connectionStatus');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (isConnected) {
+                indicator.className = 'status-indicator status-connected';
+                status.textContent = '已连接';
+                status.className = 'fw-bold text-success';
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
+            } else {
+                indicator.className = 'status-indicator status-disconnected';
+                status.textContent = '未连接';
+                status.className = 'fw-bold text-danger';
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
+            }
+        }
+
+        // 开始巡航
+        async function startPatrol() {
+            if (!isConnected) {
+                alert('请先连接机器人');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/patrol', {method: 'POST'});
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                alert('巡航错误: ' + error);
+            }
+        }
+
+        // 前往路点
+        async function gotoWaypoint() {
+            const waypoint = document.getElementById('waypointInput').value.trim();
+            if (!waypoint) {
+                alert('请输入路点名称');
+                return;
+            }
+            
+            if (!isConnected) {
+                alert('请先连接机器人');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/goto', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({waypoint: waypoint})
+                });
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                alert('导航错误: ' + error);
+            }
+        }
+
+        // 从列表前往路点
+        function gotoFromList(waypoint) {
+            document.getElementById('waypointInput').value = waypoint;
+            gotoWaypoint();
+        }
+
+        // 停止机器人
+        async function stopRobot() {
+            if (!isConnected) {
+                alert('请先连接机器人');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/stop', {method: 'POST'});
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                alert('停止错误: ' + error);
+            }
+        }
+
+        // 更新状态
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                isConnected = data.connected;
+                updateConnectionUI();
+                
+                document.getElementById('robotStatus').textContent = data.robot_status || '未知';
+                document.getElementById('gotoStatus').textContent = data.goto_status || '未知';
+                document.getElementById('currentOperation').textContent = data.current_operation || '无';
+                
+                // 更新状态颜色
+                const gotoStatusBadge = document.getElementById('gotoStatus');
+                if (data.goto_status === 'complete') {
+                    gotoStatusBadge.className = 'badge bg-success status-badge';
+                } else if (data.goto_status === 'going') {
+                    gotoStatusBadge.className = 'badge bg-primary status-badge';
+                } else {
+                    gotoStatusBadge.className = 'badge bg-secondary status-badge';
+                }
+            } catch (error) {
+                console.error('状态更新错误:', error);
+            }
+        }
+
+        // 加载路点列表
+        async function loadWaypoints() {
+            try {
+                const response = await fetch('/api/waypoints');
+                const data = await response.json();
+                
+                const list = document.getElementById('waypointList');
+                if (data.waypoints && data.waypoints.length > 0) {
+                    list.innerHTML = data.waypoints.map(wp => 
+                        `<a href="#" class="list-group-item list-group-item-action waypoint-item" onclick="gotoFromList('${wp}'); return false;">
+                            <i class="bi bi-geo-alt-fill"></i> ${wp}
+                        </a>`
+                    ).join('');
+                } else {
+                    list.innerHTML = '<div class="text-center text-muted">暂无路点</div>';
+                }
+            } catch (error) {
+                console.error('加载路点错误:', error);
+            }
+        }
+
+        // 加载照片
+        async function loadPhotos() {
+            try {
+                const response = await fetch('/api/photos');
+                const data = await response.json();
+                
+                const gallery = document.getElementById('photoGallery');
+                if (data.photos && data.photos.length > 0) {
+                    gallery.innerHTML = data.photos.slice(0, 8).map(photo => 
+                        `<div class="col-3">
+                            <img src="/photos/${photo}" class="photo-thumbnail" alt="${photo}" onclick="window.open('/photos/${photo}', '_blank')">
+                        </div>`
+                    ).join('');
+                } else {
+                    gallery.innerHTML = '<div class="col-12 text-center text-muted">暂无照片</div>';
+                }
+            } catch (error) {
+                console.error('加载照片错误:', error);
+            }
+        }
+
+        // 加载配置
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                
+                document.getElementById('configBrokerIp').textContent = data.broker_ip || '-';
+                document.getElementById('configSerial').textContent = data.temi_serial || '-';
+                document.getElementById('configWaypoints').textContent = data.waypoints_path ? data.waypoints_path.split('\\').pop() : '-';
+            } catch (error) {
+                console.error('加载配置错误:', error);
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.onload = function() {
+            loadConfig();
+            loadWaypoints();
+            updateStatus();
+            
+            // 定期更新状态和照片
+            setInterval(updateStatus, 2000);
+            setInterval(loadPhotos, 5000);
+            setInterval(loadWaypoints, 10000);
+            
+            // 首次加载照片
+            loadPhotos();
+        };
+    </script>
+</body>
+</html>

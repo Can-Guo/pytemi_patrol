@@ -15,7 +15,7 @@ A repo to create, execute or arrange periodic patrol tasks for Temi robot based 
 ##### 1. Temi机器人连网
 启动Temi机器人,Temi连接至Cruzr_PSTS(wifi)，默认ip: 192.168.8.130，保持机器人正常连网状态。
 ##### 2. 扫图、加点
-重新扫图，备份地图，登录Temi Center [url:https://center.robotemi.com/]，添加所有需巡检的点位，点击某些点位让机器人前往，查看Temi是否正常定位和导航，如果未知定位，请重新定位，并在机器人行走时，查看temi center是否持续更新机器人的定位和状态。
+重新扫图，备份地图，登录Temi Center [url](https://center.robotemi.com/)，添加所有需巡检的点位，点击某些点位让机器人前往，查看Temi是否正常定位和导航，如果未知定位，请重新定位，并在机器人行走时，查看temi center是否持续更新机器人的定位和状态。
 ##### 3. 启动照片监控脚本
 启动照片监控脚本（可先启动，以随时监控照片并上传至ai服务器分析结果，保持运行）。或远程SSH登录MCB，执行照片监控脚本，
 ##### 4. 启动巡检脚本
@@ -23,9 +23,8 @@ A repo to create, execute or arrange periodic patrol tasks for Temi robot based 
 
 ---
 
-### Related Repository
-1. pytemi:[text](https://github.com/hapi-robo/pytemi)
-2. temi_mqtt_client:[text](https://github.com/hapi-robo/temi-mqtt-client/)
+### Related Repository: [pytemi](https://github.com/hapi-robo/pytemi)
+ & [temi_mqtt_client](https://github.com/hapi-robo/temi-mqtt-client/)
 
 
 ### 系统概述
