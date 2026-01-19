@@ -694,6 +694,15 @@ class CameraController:
                         }
                         await websocket.send(json.dumps(status))
                     
+                    elif command == "ping":
+                        # 心跳响应
+                        pong_response = {
+                            "success": True,
+                            "pong": True,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                        await websocket.send(json.dumps(pong_response))
+                    
                     else:
                         # 未知命令
                         error_response = {
@@ -740,11 +749,21 @@ class CameraController:
         self._log("  1. 拍照: {\"command\": \"capture\", \"filename\": \"可选\"}")
         self._log("  2. 录制: {\"command\": \"record\", \"duration\": 10, \"width\": 1920, \"height\": 1080, \"fps\": 30, \"format\": \"mp4\"}")
         self._log("  3. 状态: {\"command\": \"status\"}")
+        self._log("  4. 心跳: {\"command\": \"ping\"}")
         self._log("\n支持的视频格式: mp4, avi, mov, mkv")
         self._log("💡 按 Ctrl+C 停止服务器\n")
         
-        async with websockets.serve(self.handle_websocket_message, self.host, self.port):
+        # 配置 WebSocket 服务器参数，启用 ping/pong 心跳
+        async with websockets.serve(
+            self.handle_websocket_message, 
+            self.host, 
+            self.port,
+            ping_interval=20,  # 每20秒发送一次ping
+            ping_timeout=10,   # ping超时时间10秒
+            close_timeout=10   # 关闭超时时间10秒
+        ):
             self._log("✅ WebSocket服务器已启动")
+            self._log("💓 心跳已启用: ping间隔20秒, 超时10秒")
             await asyncio.Future()  # 运行直到取消
     
     def run(self):
