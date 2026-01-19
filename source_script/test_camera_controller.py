@@ -9,6 +9,7 @@ import websockets
 import json
 import sys
 from datetime import datetime
+from aioconsole import ainput
 
 
 class CameraControllerTester:
@@ -259,12 +260,13 @@ class CameraControllerTester:
             # 配置 WebSocket 客户端参数
             async with websockets.connect(
                 self.uri,
-                ping_interval=20,  # 启用自动 ping，每20秒一次
-                ping_timeout=10,   # ping 超时10秒
+                ping_interval=30,  # 启用自动 ping，每30秒一次
+                ping_timeout=60,   # ping 超时60秒（允许用户思考时间）
                 close_timeout=10   # 关闭超时10秒
             ) as websocket:
                 self._log("✅ 连接成功")
-                self._log("💓 心跳已启用 (WebSocket 自动 ping/pong)\n")
+                self._log("💓 心跳已启用 (每30秒检测一次)")
+                self._log("💡 提示: 如需长时间停留，请在60秒内进行操作\n")
                 
                 while True:
                     print("\n" + "="*70)
@@ -279,7 +281,7 @@ class CameraControllerTester:
                     print("  0 - 退出")
                     print("="*70)
                     
-                    choice = input("请选择命令 [0-7]: ").strip()
+                    choice = await ainput("请选择命令 [0-7]: ")
                     
                     if choice == "0":
                         self._log("👋 退出交互式测试")

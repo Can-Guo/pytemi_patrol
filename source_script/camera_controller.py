@@ -758,12 +758,12 @@ class CameraController:
             self.handle_websocket_message, 
             self.host, 
             self.port,
-            ping_interval=20,  # 每20秒发送一次ping
-            ping_timeout=10,   # ping超时时间10秒
+            ping_interval=30,  # 每30秒发送一次ping
+            ping_timeout=60,   # ping超时时间60秒（考虑客户端input阻塞）
             close_timeout=10   # 关闭超时时间10秒
         ):
             self._log("✅ WebSocket服务器已启动")
-            self._log("💓 心跳已启用: ping间隔20秒, 超时10秒")
+            self._log("💓 心跳已启用: ping间隔30秒, 超时60秒")
             await asyncio.Future()  # 运行直到取消
     
     def run(self):
