@@ -14,10 +14,11 @@ from queue import Queue
 from threading import Thread, Lock
 
 # 配置
-API_URL = "http://161.81.250.66:6001/analyze"
+#API_URL = "http://161.81.250.66:6001/analyze"
+API_URL = "https://645t2cmhz085.share.zrok.io"
 # 使用脚本所在目录的photos文件夹
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PHOTOS_DIR = os.path.join(SCRIPT_DIR, "photos")
+PHOTOS_DIR = os.path.join(SCRIPT_DIR, "cam_photos")
 RESULTS_FILE = os.path.join(SCRIPT_DIR, "analysis_results.csv")
 TIME_THRESHOLD = 20  # 时间阈值（秒）
 CHECK_INTERVAL = 2   # 检查间隔（秒）

@@ -1,0 +1,12 @@
+image_filename,prompt_query,analyzed_result,water_leakage,处理时间
+photo_20260119_175125_016.jpg,,API调用失败,,2026-01-19 17:52:26
+photo_20260119_175332_707.jpg,,API调用失败,,2026-01-19 17:54:33
+photo_20260119_180341_497.jpg,,API调用失败,,2026-01-19 18:03:44
+photo_20260119_180414_548.jpg,,API调用失败,,2026-01-19 18:04:19
+photo_20260119_180813_350.jpg,Please describe the image.,"The image depicts the interior ceiling of a commercial or office space. It features a grid of white drop ceiling tiles with visible seams. Two rectangular fluorescent light fixtures with white, grid-patterned diffusers are mounted on the ceiling, emitting bright light. To the right of the central light fixture, there is a square-shaped ventilation grille with a geometric design (concentric square patterns). On the left side of the image, a rectangular air vent with horizontal slats is visible. A small circular smoke detector is also present on one of the ceiling tiles. The overall scene is well-lit, with the fluorescent lights creating a bright contrast against the lighter-colored ceiling panels.",False 95%,2026-01-19 18:08:27
+photo_20260119_181107_127.jpg,請描述一下圖片，看地面、地毯、天花板或牆身有否漏水、水氹、滲水、水漬的跡象,"圖片展示室內天花板局部，包含白色方形吊頂面板、兩個長條形燈具（類似日光燈管）及兩個通風口（一個方形、一個長條形）。整體情況如下：  
+- **天花板面板**：表面平整，無明顯水漬、滲水或水汽跡象。  
+- **燈具與通風口**：燈具發光正常，通風口結構完整，亦無水跡或滲水痕跡。  
+- **其他區域**：因圖片視角僅限天花板部分，地面、地毯及牆身未包含於視角內，故無法評估該等區域狀況。  
+
+根據所見範圍，**未見漏水、水氹、滲水、水漬的跡象**。",False 95%,2026-01-19 18:11:25
