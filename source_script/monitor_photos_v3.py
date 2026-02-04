@@ -14,8 +14,10 @@ from queue import Queue
 from threading import Thread, Lock
 
 # 配置
-API_URL = "https://645t2cmhz085.share.zrok.io/analyze"
-#API_URL = "http://161.81.250.66:6001/analyze"
+#API_URL = "https://645t2cmhz085.share.zrok.io/analyze"
+#API_URL = "http://161.81.250.
+API_URL = "https://iw6dr1s9y5yj.share.zrok.io/analyze"
+
 
 # 使用脚本所在目录的photos文件夹
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
